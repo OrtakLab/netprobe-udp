@@ -224,9 +224,3 @@ Bütünlük kontrolü: CRC32 her pakette, SHA-256 hash FIN paketinde gönderilir
 
 - Python standart kütüphanesi: `socket`, `struct`, `zlib`, `hashlib`, `threading`, `csv`, `time`
 - Dış kütüphaneler: `matplotlib`, `pandas` (analiz için), `flask` (web arayüzü için)
-
----
-
-## GitHub
-
-[Repo bağlantısı buraya eklenecek]
