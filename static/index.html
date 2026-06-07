@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NetProbe — UDP File Transfer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/style.css"/>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══════════════════════════════════════════ -->
+<header>
+  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style="flex-shrink:0">
+    <rect width="28" height="28" rx="7" fill="#1E40AF"/>
+    <rect x="6" y="8"     width="16" height="2.5" rx="1.25" fill="white"/>
+    <rect x="6" y="12.75" width="16" height="2.5" rx="1.25" fill="white" opacity=".75"/>
+    <rect x="6" y="17.5"  width="10" height="2.5" rx="1.25" fill="white" opacity=".5"/>
+  </svg>
+  <span class="logo">NetProbe</span>
+  <span class="logo-tag">Grup 14</span>
+  <div class="header-right">
+    <div class="status-pill" id="status-pill">
+      <div class="dot" id="hdr-dot"></div>
+      <span id="hdr-status">Sunucu kapalı</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ STEPPER ══════════════════════════════════════════ -->
+<nav class="stepper">
+  <div class="step-item active" data-step="1" onclick="goToStep(1)">
+    <div class="step-circle">
+      <span class="step-num">1</span>
+      <svg class="step-check" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1.5,6 4.5,9 10.5,3"/>
+      </svg>
+    </div>
+    <span class="step-label">Sunucu</span>
+  </div>
+
+  <div class="step-connector"></div>
+
+  <div class="step-item" data-step="2" onclick="goToStep(2)">
+    <div class="step-circle">
+      <span class="step-num">2</span>
+      <svg class="step-check" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1.5,6 4.5,9 10.5,3"/>
+      </svg>
+    </div>
+    <span class="step-label">Aktarım</span>
+  </div>
+
+  <div class="step-connector"></div>
+
+  <div class="step-item" data-step="3" onclick="goToStep(3)">
+    <div class="step-circle">
+      <span class="step-num">3</span>
+      <svg class="step-check" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1.5,6 4.5,9 10.5,3"/>
+      </svg>
+    </div>
+    <span class="step-label">Sonuçlar</span>
+  </div>
+</nav>
+
+<!-- ═══ STEP 1: Сервер ═══════════════════════════════════ -->
+<div class="step-panel active" id="step-1">
+  <div class="step-panel-narrow">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="8" rx="2"/>
+            <rect x="2" y="14" width="20" height="8" rx="2"/>
+            <line x1="6" y1="6" x2="6.01" y2="6"/>
+            <line x1="6" y1="18" x2="6.01" y2="18"/>
+          </svg>
+        </div>
+        <div class="card-meta">
+          <div class="card-title">UDP Sunucu</div>
+          <div class="card-desc">Ağ simülasyonunu yapılandırın ve sunucuyu başlatın</div>
+        </div>
+      </div>
+
+      <div class="info-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        Başlatıldıktan sonra 2. adıma geçeceksiniz — dosya gönderimi
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span>Paket kaybı</span>
+          <span class="field-val" id="loss-val">0%</span>
+        </div>
+        <input type="range" id="loss-rate" min="0" max="50" step="1" value="0"
+               title="Sunucuda paket kaybı olasılığı (0 = kayıp yok)"
+               oninput="document.getElementById('loss-val').textContent=this.value+'%'"/>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span>Yapay gecikme</span>
+          <span class="field-val" id="delay-val">0 ms</span>
+        </div>
+        <input type="range" id="delay-ms" min="0" max="200" step="5" value="0"
+               title="Sunucuda paket işleme gecikmesi milisaniye cinsinden"
+               oninput="document.getElementById('delay-val').textContent=this.value+' ms'"/>
+      </div>
+
+      <div class="sep"></div>
+
+      <button class="btn btn-primary" id="btn-start" onclick="startServer()">
+        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+        Sunucuyu başlat
+      </button>
+      <div style="height:8px"></div>
+      <button class="btn btn-danger" id="btn-stop" onclick="stopServer()" style="display:none">
+        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        Sunucuyu durdur
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STEP 2: Передача ══════════════════════════════════ -->
+<div class="step-panel" id="step-2">
+  <div class="step-panel-narrow">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="card-meta">
+          <div class="card-title">Dosya gönder</div>
+          <div class="card-desc">Dosyayı ve UDP aktarım parametrelerini seçin</div>
+        </div>
+      </div>
+
+      <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" onchange="fileSelected(this)" onclick="event.stopPropagation()"/>
+        <div class="dz-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+            <polyline points="13 2 13 9 20 9"/>
+          </svg>
+        </div>
+        <div class="dz-text"><strong>Tıklayın</strong> veya dosyayı buraya sürükleyin</div>
+        <div class="dz-file" id="dz-filename"></div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span>Paket boyutu</span>
+          <span class="field-val" id="pkt-val">1024 B</span>
+        </div>
+        <input type="range" id="pkt-size" min="256" max="8192" step="256" value="1024"
+               title="Bir UDP datagramının yük boyutu bayt cinsinden"
+               oninput="document.getElementById('pkt-val').textContent=this.value+' B'"/>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span>ACK bekleme zaman aşımı</span>
+          <span class="field-val" id="to-val">1.0 s</span>
+        </div>
+        <input type="range" id="timeout" min="1" max="30" step="1" value="10"
+               title="Yeniden göndermeden önce onay bekleme süresi"
+               oninput="document.getElementById('to-val').textContent=(this.value/10).toFixed(1)+' s'"/>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span>Maks. yeniden deneme sayısı</span>
+          <span class="field-val" id="retry-val">5</span>
+        </div>
+        <input type="range" id="max-retries" min="1" max="10" step="1" value="5"
+               title="Bir paketin maksimum yeniden gönderme sayısı"
+               oninput="document.getElementById('retry-val').textContent=this.value"/>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="toggle-row">
+        <label class="toggle">
+          <input type="checkbox" id="use-gbn" onchange="toggleGbn(this)"/>
+          <span class="slider"></span>
+        </label>
+        <span class="toggle-label">Go-Back-N (kayan pencere)</span>
+        <span class="toggle-badge">BONUS</span>
+      </div>
+
+      <div class="gbn-box" id="gbn-opts">
+        <div class="field-label" style="margin-bottom:7px">
+          <span style="font-size:12px;color:var(--text-2);font-weight:500">GBN pencere boyutu</span>
+          <span class="field-val" id="win-val">4</span>
+        </div>
+        <input type="range" id="win-size" min="1" max="16" step="1" value="4"
+               title="Uçuşta olan onaylanmamış paket sayısı (Go-Back-N)"
+               oninput="document.getElementById('win-val').textContent=this.value"/>
+      </div>
+
+      <button class="btn btn-primary" id="btn-send" onclick="sendFile()" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+        Dosyayı gönder
+      </button>
+      <div class="progress-wrap" id="progress-wrap">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STEP 3: Результаты ════════════════════════════════ -->
+<div class="step-panel" id="step-3">
+  <div class="results-grid">
+
+    <!-- Metrics — full width -->
+    <div class="card card-full">
+      <div class="card-header" style="margin-bottom:16px">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <div class="card-meta">
+          <div class="card-title">Aktarım metrikleri</div>
+          <div class="card-desc">Her aktarımdan sonra otomatik güncellenir</div>
+        </div>
+        <button class="btn btn-ghost" onclick="goToStep(2)"
+                style="padding:7px 14px;font-size:12px;font-family:var(--font-mono);flex-shrink:0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Yeni aktarım
+        </button>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-tile">
+          <div class="metric-val" id="m-throughput">—</div>
+          <div class="metric-label">Throughput<br/>kbps</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-val" id="m-goodput">—</div>
+          <div class="metric-label">Goodput<br/>kbps</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-val" id="m-rtt">—</div>
+          <div class="metric-label">Avg RTT<br/>ms</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-val" id="m-retx">—</div>
+          <div class="metric-label">Retransmit<br/>Rate</div>
+        </div>
+      </div>
+
+      <div class="badges-row">
+        <span id="badge-pkts" class="badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          </svg>
+          — paket
+        </span>
+        <span id="badge-time" class="badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          — sn
+        </span>
+        <span id="badge-status" class="badge">Veri yok</span>
+      </div>
+    </div>
+
+    <!-- Log -->
+    <div class="card">
+      <div class="card-header" style="margin-bottom:14px">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"/>
+            <line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+        </div>
+        <div class="card-meta">
+          <div class="card-title">Olay günlüğü</div>
+          <div class="card-desc">Aktarım ve sunucu akış çıktısı</div>
+        </div>
+      </div>
+
+      <div class="tab-row">
+        <button class="tab active" onclick="switchTab('client')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+          İstemci
+        </button>
+        <button class="tab" onclick="switchTab('server')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="2" width="20" height="8" rx="2"/>
+            <rect x="2" y="14" width="20" height="8" rx="2"/>
+            <line x1="6" y1="6" x2="6.01" y2="6"/>
+            <line x1="6" y1="18" x2="6.01" y2="18"/>
+          </svg>
+          Sunucu
+        </button>
+      </div>
+
+      <div class="tab-pane active" id="tab-client">
+        <div class="console" id="console-client"><span class="ln ln-info">// Aktarım bekleniyor...</span></div>
+      </div>
+      <div class="tab-pane" id="tab-server">
+        <div class="console" id="console-server"><span class="ln ln-info">// Sunucu başlatılmadı</span></div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="card">
+      <div class="section-header" style="margin-bottom:0">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"/>
+            <line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6"  y1="20" x2="6"  y2="14"/>
+            <line x1="2"  y1="20" x2="22" y2="20"/>
+          </svg>
+        </div>
+        <div class="card-meta">
+          <div class="card-title">Analiz grafikleri</div>
+          <div class="card-desc">CSV günlüğünden metrik görselleştirmesi</div>
+        </div>
+        <button class="btn btn-ghost" id="btn-analyze" onclick="analyze()"
+                style="padding:7px 14px;font-size:12px;font-family:var(--font-mono);flex-shrink:0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+            <polyline points="17 6 23 6 23 12"/>
+          </svg>
+          Analiz et
+        </button>
+      </div>
+
+      <div class="chart-area" id="chart-area">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--muted-soft)">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6"  y1="20" x2="6"  y2="14"/>
+          <line x1="2"  y1="20" x2="22" y2="20"/>
+        </svg>
+        <span class="chart-placeholder">Grafik oluşturmak için "Analiz et" düğmesine tıklayın</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── State ──────────────────────────────────────────────── //
+let serverRunning   = false;
+let transferRunning = false;
+let selectedFile    = null;
+let activeTab       = 'client';
+let clientLogLen    = 0;
+let serverLogLen    = 0;
+let currentStep     = 1;
+
+// ─── Wizard navigation ──────────────────────────────────── //
+function goToStep(n) {
+  currentStep = n;
+  document.querySelectorAll('.step-panel').forEach((p, i) => {
+    p.classList.toggle('active', i + 1 === n);
+  });
+  document.querySelectorAll('.step-item').forEach((item, i) => {
+    item.classList.remove('active', 'done');
+    if (i + 1 < n)  item.classList.add('done');
+    if (i + 1 === n) item.classList.add('active');
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── Drag & drop ────────────────────────────────────────── //
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) setFile(f);
+});
+
+function fileSelected(input) {
+  if (input.files[0]) setFile(input.files[0]);
+}
+function setFile(f) {
+  selectedFile = f;
+  const fn = document.getElementById('dz-filename');
+  fn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>${escHtml(f.name)} (${fmtBytes(f.size)})`;
+  updateSendBtn();
+}
+function fmtBytes(b) {
+  if (b < 1024)    return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(2) + ' MB';
+}
+
+// ─── GBN toggle ─────────────────────────────────────────── //
+function toggleGbn(cb) {
+  document.getElementById('gbn-opts').style.display = cb.checked ? 'block' : 'none';
+}
+
+// ─── Tab switching ──────────────────────────────────────── //
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'client') || (i === 1 && tab === 'server'));
+  });
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+// ─── Server ─────────────────────────────────────────────── //
+async function startServer() {
+  const lossRate = document.getElementById('loss-rate').value / 100;
+  const delay    = document.getElementById('delay-ms').value;
+  const r = await fetch('/api/server/start', {
+    method:  'POST',
+    headers: {'Content-Type': 'application/json'},
+    body:    JSON.stringify({loss_rate: lossRate, delay: parseFloat(delay)}),
+  });
+  const d = await r.json();
+  if (!d.ok) { alert('Hata: ' + d.error); return; }
+  setServerState(true);
+  setTimeout(() => goToStep(2), 400);
+}
+
+async function stopServer() {
+  await fetch('/api/server/stop', { method: 'POST' });
+  setServerState(false);
+  goToStep(1);
+}
+
+function setServerState(on) {
+  serverRunning = on;
+  document.getElementById('status-pill').classList.toggle('on', on);
+  document.getElementById('hdr-dot').classList.toggle('pulse', on);
+  document.getElementById('hdr-status').textContent = on ? 'Sunucu çalışıyor' : 'Sunucu kapalı';
+  document.getElementById('btn-start').style.display = on ? 'none' : '';
+  document.getElementById('btn-stop').style.display  = on ? ''     : 'none';
+  updateSendBtn();
+}
+
+function updateSendBtn() {
+  document.getElementById('btn-send').disabled = !(serverRunning && selectedFile && !transferRunning);
+}
+
+// ─── Transfer ───────────────────────────────────────────── //
+async function sendFile() {
+  if (!selectedFile || !serverRunning) return;
+
+  const form = new FormData();
+  form.append('file',        selectedFile);
+  form.append('packet_size', document.getElementById('pkt-size').value);
+  form.append('timeout',     (document.getElementById('timeout').value / 10).toFixed(1));
+  form.append('max_retries', document.getElementById('max-retries').value);
+  form.append('use_gbn',     document.getElementById('use-gbn').checked);
+  form.append('window_size', document.getElementById('win-size').value);
+
+  document.getElementById('console-client').innerHTML = '<span class="ln ln-info">// Aktarım başlıyor...</span>';
+  clientLogLen = 0;
+
+  document.getElementById('progress-wrap').classList.add('visible');
+  document.getElementById('progress-bar').style.width = '5%';
+  transferRunning = true;
+  updateSendBtn();
+
+  const r = await fetch('/api/transfer', { method: 'POST', body: form });
+  const d = await r.json();
+  if (!d.ok) {
+    alert('Hata: ' + d.error);
+    transferRunning = false;
+    document.getElementById('progress-wrap').classList.remove('visible');
+    updateSendBtn();
+  }
+}
+
+// ─── Polling ────────────────────────────────────────────── //
+async function poll() {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+
+    if (d.server_running !== serverRunning) setServerState(d.server_running);
+
+    if (transferRunning && !d.transfer_running) {
+      transferRunning = false;
+      document.getElementById('progress-bar').style.width = '100%';
+      setTimeout(() => {
+        document.getElementById('progress-wrap').classList.remove('visible');
+        document.getElementById('progress-bar').style.width = '0%';
+      }, 600);
+      updateSendBtn();
+      if (currentStep === 2) setTimeout(() => goToStep(3), 800);
+    }
+    if (d.transfer_running) {
+      const pct = Math.min(95, 5 + clientLogLen * 2);
+      document.getElementById('progress-bar').style.width = pct + '%';
+    }
+
+    const newCliLines = d.transfer_log.slice(clientLogLen);
+    if (newCliLines.length) {
+      const con = document.getElementById('console-client');
+      newCliLines.forEach(entry => {
+        con.innerHTML += `<span class="ln ${lineClass(entry.msg)}">${escHtml(entry.msg)}</span>`;
+      });
+      clientLogLen = d.transfer_log.length;
+      con.scrollTop = con.scrollHeight;
+    }
+
+    const newSrvLines = d.server_log.slice(serverLogLen);
+    if (newSrvLines.length) {
+      const con = document.getElementById('console-server');
+      if (serverLogLen === 0) con.innerHTML = '';
+      newSrvLines.forEach(entry => {
+        con.innerHTML += `<span class="ln ln-srv">${escHtml(entry.msg)}</span>`;
+      });
+      serverLogLen = d.server_log.length;
+      con.scrollTop = con.scrollHeight;
+    }
+
+    const s = d.summary;
+    if (s && Object.keys(s).length) {
+      setText('m-throughput', s.throughput_kbps != null ? s.throughput_kbps.toFixed(1) : '—');
+      setText('m-goodput',    s.goodput_kbps    != null ? s.goodput_kbps.toFixed(1)    : '—');
+      setText('m-rtt',        s.avg_rtt_ms      != null ? s.avg_rtt_ms.toFixed(2)      : '—');
+      const rr = s.retransmit_rate_pct;
+      setText('m-retx', rr != null ? rr.toFixed(1) + '%' : '—');
+      setText('badge-pkts', (s.sent_packets ?? '?') + ' paket');
+      setText('badge-time', (s.elapsed_sec  ?? '?') + ' sn');
+      const ok = rr != null && rr < 1;
+      const badgeEl = document.getElementById('badge-status');
+      badgeEl.className = 'badge ' + (ok ? 'ok' : rr > 10 ? 'error' : 'warn');
+      badgeEl.textContent = ok ? 'Başarılı' : (rr > 10 ? 'Çok fazla kayıp' : 'Yeniden denemeler oldu');
+    }
+  } catch(e) { /* server restarting */ }
+}
+
+function lineClass(msg) {
+  if (/\[SEND\]/.test(msg))                        return 'ln-send';
+  if (/ACK_RECV|Integrity OK/.test(msg))           return 'ln-ack';
+  if (/\[TIMEOUT\]/.test(msg))                     return 'ln-timeout';
+  if (/\[RETX\]/.test(msg))                       return 'ln-retx';
+  if (/FAIL|ERROR|MISMATCH/.test(msg))            return 'ln-fail';
+  if (/Summary|Throughput|Goodput|SHA/.test(msg)) return 'ln-ok';
+  return 'ln-info';
+}
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function setText(id, val) {
+  document.getElementById(id).textContent = val;
+}
+
+setInterval(poll, 600);
+
+// ─── Analyze ────────────────────────────────────────────── //
+async function analyze() {
+  const btn = document.getElementById('btn-analyze');
+  btn.disabled = true;
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> İşleniyor...`;
+  try {
+    const r = await fetch('/api/analyze', { method: 'POST' });
+    const d = await r.json();
+    if (d.ok) {
+      document.getElementById('chart-area').innerHTML =
+        `<img src="${d.image}?t=${Date.now()}" alt="metrics chart"/>`;
+    } else {
+      alert('Analiz hatası: ' + d.error);
+    }
+  } catch(e) {
+    alert('Hata: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> Analiz et`;
+  }
+}
+</script>
+</body>
+</html>
