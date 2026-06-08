@@ -4,6 +4,8 @@
 
 Bursa Teknik Üniversitesi — Bilgisayar Ağları Dönem Projesi
 
+GitHub bağlantısı: https://github.com/OrtakLab/netprobe-udp
+
 ---
 
 ## Proje Yapısı
@@ -24,7 +26,7 @@ netprobe/
 ├── logs/                  # Otomatik oluşturulan CSV loglar
 ├── results/               # Grafik çıktıları (PNG)
 ├── test_files/            # Test dosyaları (run_experiments.py tarafından üretilir)
-├── rapor/                 # Teknik rapor
+├── uploads/               # Web arayüzünden yüklenen dosyalar ve rapor PDF'leri
 ├── web_app.py             # Flask web arayüzü backend (port 8080)
 ├── run_experiments.py     # Tüm deney senaryolarını otomatik çalıştırır
 └── requirements.txt
@@ -93,6 +95,7 @@ python src/analyzer.py --log logs/transfer_client_<timestamp>.csv ^
 | `--delay` | 0.0 | Yapay gecikme (ms) |
 | `--log-dir` | logs | Log klasörü |
 | `--label` | "" | Log dosyası etiketi |
+| `--idle-timeout` | 8.0 | Yarım kalan aktarımı `.partial` olarak kaydetmeden önce beklenecek süre |
 
 ### client.py (Stop-and-Wait)
 
@@ -165,6 +168,8 @@ foreach ($f in @("1KB", "100KB", "1MB", "10MB")) {
 ```bash
 python run_experiments.py --port 5001
 ```
+
+> Not: 1, 2 ve 4. senaryolar için `--port` üzerinde normal sunucu çalışıyor olmalıdır. 3. senaryo, kayıp oranlarını çakışma olmadan test etmek için otomatik olarak bir sonraki portu kullanır (`--port 5001` verilirse `5002`).
 
 ---
 

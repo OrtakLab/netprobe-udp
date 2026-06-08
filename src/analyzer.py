@@ -175,6 +175,8 @@ def main():
     parser.add_argument("--labels",    nargs="+", help="Labels for each log in compare mode")
     parser.add_argument("--file-size", type=int, required=True,
                         help="Original file size in bytes")
+    parser.add_argument("--file-sizes", nargs="+", type=int,
+                        help="Per-log original file sizes for compare mode")
     parser.add_argument("--packet-size", type=int, default=None)
     parser.add_argument("--metric",    type=str, default="throughput_kbps",
                         choices=list(METRIC_META.keys()))
@@ -189,10 +191,13 @@ def main():
 
     if args.compare and args.logs:
         labels = args.labels or [os.path.basename(p) for p in args.logs]
+        if args.file_sizes and len(args.file_sizes) != len(args.logs):
+            parser.error("--file-sizes must have the same number of values as --logs")
         all_metrics = []
-        for path, lbl in zip(args.logs, labels):
+        file_sizes = args.file_sizes or [args.file_size] * len(args.logs)
+        for path, lbl, fsize in zip(args.logs, labels, file_sizes):
             log_data = parse_log(path)
-            m = compute_metrics(log_data, args.file_size, args.packet_size)
+            m = compute_metrics(log_data, fsize, args.packet_size)
             print_metrics(lbl, m)
             all_metrics.append(m)
 

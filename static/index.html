@@ -64,6 +64,18 @@
     </div>
     <span class="step-label">Sonuçlar</span>
   </div>
+
+  <div class="step-connector"></div>
+
+  <div class="step-item" data-step="4" onclick="goToStep(4)">
+    <div class="step-circle">
+      <span class="step-num">4</span>
+      <svg class="step-check" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1.5,6 4.5,9 10.5,3"/>
+      </svg>
+    </div>
+    <span class="step-label">Deneyler</span>
+  </div>
 </nav>
 
 <!-- ═══ STEP 1: Сервер ═══════════════════════════════════ -->
@@ -341,7 +353,7 @@
           </svg>
         </div>
         <div class="card-meta">
-          <div class="card-title">Analiz grafikleri</div>
+          <div class="card-title">Analiz Grafikleri</div>
           <div class="card-desc">CSV günlüğünden metrik görselleştirmesi</div>
         </div>
         <button class="btn btn-ghost" id="btn-analyze" onclick="analyze()"
@@ -368,14 +380,144 @@
   </div>
 </div>
 
+<!-- ═══ STEP 4: Automated experiments ══════════════════════ -->
+<div class="step-panel" id="step-4">
+  <div class="experiments-layout">
+    <div class="card card-full">
+      <div class="card-header" style="margin-bottom:14px">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3v18h18"/>
+            <path d="M7 15l4-4 3 3 5-7"/>
+          </svg>
+        </div>
+        <div class="card-meta">
+          <div class="card-title">Otomatik deney seti</div>
+          <div class="card-desc">run_experiments.py ayrı bir akış olarak çalışır ve PNG çıktıları results klasörüne yazar</div>
+        </div>
+        <button class="btn btn-ghost" onclick="goToStep(2)"
+                style="padding:7px 14px;font-size:12px;font-family:var(--font-mono);flex-shrink:0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Manuel aktarım
+        </button>
+      </div>
+
+      <div class="info-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        Bu bölüm manuel dosya yükleme ekranından bağımsızdır; test dosyalarını üretir, deneyleri çalıştırır ve grafikleri results içinde toplar.
+      </div>
+
+      <div class="scenario-grid">
+        <div class="scenario-item">
+          <span class="scenario-num">1</span>
+          <div>
+            <strong>Paket boyutu etkisi</strong>
+            <p>1 MB test dosyası; paket boyutları 512 B, 1024 B, 4096 B ve 8192 B. Üretilen grafikler: throughput, goodput, completion time.</p>
+          </div>
+        </div>
+        <div class="scenario-item">
+          <span class="scenario-num">2</span>
+          <div>
+            <strong>Timeout değeri etkisi</strong>
+            <p>100 KB test dosyası; timeout değerleri 100 ms, 500 ms, 1000 ms ve 2000 ms. Üretilen grafikler: completion time, retransmit rate, average RTT.</p>
+          </div>
+        </div>
+        <div class="scenario-item">
+          <span class="scenario-num">3</span>
+          <div>
+            <strong>Paket kaybı oranı etkisi</strong>
+            <p>100 KB test dosyası; kayıp oranları 0%, 5%, 10% ve 20%. Her oran için ayrı sunucu başlatılır. Üretilen grafikler: retransmit rate, completion time, goodput.</p>
+          </div>
+        </div>
+        <div class="scenario-item">
+          <span class="scenario-num">4</span>
+          <div>
+            <strong>Dosya boyutu etkisi</strong>
+            <p>1024 B paket boyutu; dosya boyutları 1 KB, 100 KB, 1 MB ve 10 MB. Üretilen grafikler: throughput, goodput, completion time.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="experiment-actions">
+        <button class="btn btn-primary" id="btn-experiment-run" onclick="startExperiments()">
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+          Deneyleri çalıştır
+        </button>
+        <button class="btn btn-ghost" onclick="loadExperimentResults()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/>
+            <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/>
+          </svg>
+          Sonuçları yenile
+        </button>
+      </div>
+      <div class="progress-wrap" id="experiment-progress">
+        <div class="progress-bar"></div>
+      </div>
+      <div class="badges-row">
+        <span id="experiment-status" class="badge">Hazır</span>
+        <span class="badge">results/*.png</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" style="margin-bottom:14px">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"/>
+            <line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+        </div>
+        <div class="card-meta">
+          <div class="card-title">Deney günlüğü</div>
+          <div class="card-desc">run_experiments.py ve geçici deney sunucusu çıktısı</div>
+        </div>
+      </div>
+      <div class="console console-tall" id="console-experiments"><span class="ln ln-info">// Deneyler henüz başlatılmadı</span></div>
+    </div>
+
+    <div class="card">
+      <div class="section-header" style="margin-bottom:0">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+          </svg>
+        </div>
+        <div class="card-meta">
+          <div class="card-title">results klasörü</div>
+          <div class="card-desc">Otomatik deneylerden oluşan PNG grafikleri</div>
+        </div>
+      </div>
+      <div class="experiment-gallery" id="experiment-gallery">
+        <span class="chart-placeholder">Sonuçları görmek için deneyleri çalıştırın veya yenileyin</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── State ──────────────────────────────────────────────── //
 let serverRunning   = false;
 let transferRunning = false;
+let experimentRunning = false;
 let selectedFile    = null;
 let activeTab       = 'client';
 let clientLogLen    = 0;
 let serverLogLen    = 0;
+let experimentLogLen = 0;
 let currentStep     = 1;
 
 // ─── Wizard navigation ──────────────────────────────────── //
@@ -503,8 +645,11 @@ async function poll() {
   try {
     const r = await fetch('/api/status');
     const d = await r.json();
+    const wasExperimentRunning = experimentRunning;
 
     if (d.server_running !== serverRunning) setServerState(d.server_running);
+
+    setExperimentState(Boolean(d.experiment_running), d.experiment_error);
 
     if (transferRunning && !d.transfer_running) {
       transferRunning = false;
@@ -542,6 +687,20 @@ async function poll() {
       con.scrollTop = con.scrollHeight;
     }
 
+    const newExpLines = (d.experiment_log || []).slice(experimentLogLen);
+    if (newExpLines.length) {
+      const con = document.getElementById('console-experiments');
+      if (experimentLogLen === 0) con.innerHTML = '';
+      newExpLines.forEach(entry => {
+        con.innerHTML += `<span class="ln ${lineClass(entry.msg)}">${escHtml(entry.msg)}</span>`;
+      });
+      experimentLogLen = d.experiment_log.length;
+      con.scrollTop = con.scrollHeight;
+    }
+    if (!d.experiment_running && wasExperimentRunning) {
+      loadExperimentResults(d.experiment_results || null);
+    }
+
     const s = d.summary;
     if (s && Object.keys(s).length) {
       setText('m-throughput', s.throughput_kbps != null ? s.throughput_kbps.toFixed(1) : '—');
@@ -551,10 +710,15 @@ async function poll() {
       setText('m-retx', rr != null ? rr.toFixed(1) + '%' : '—');
       setText('badge-pkts', (s.sent_packets ?? '?') + ' paket');
       setText('badge-time', (s.elapsed_sec  ?? '?') + ' sn');
-      const ok = rr != null && rr < 1;
       const badgeEl = document.getElementById('badge-status');
-      badgeEl.className = 'badge ' + (ok ? 'ok' : rr > 10 ? 'error' : 'warn');
-      badgeEl.textContent = ok ? 'Başarılı' : (rr > 10 ? 'Çok fazla kayıp' : 'Yeniden denemeler oldu');
+      if (s.transfer_ok === false) {
+        badgeEl.className = 'badge error';
+        badgeEl.textContent = 'Başarısız';
+      } else {
+        const ok = rr != null && rr < 1;
+        badgeEl.className = 'badge ' + (ok ? 'ok' : rr > 10 ? 'error' : 'warn');
+        badgeEl.textContent = ok ? 'Başarılı' : (rr > 10 ? 'Çok fazla kayıp' : 'Yeniden denemeler oldu');
+      }
     }
   } catch(e) { /* server restarting */ }
 }
@@ -564,7 +728,7 @@ function lineClass(msg) {
   if (/ACK_RECV|Integrity OK/.test(msg))           return 'ln-ack';
   if (/\[TIMEOUT\]/.test(msg))                     return 'ln-timeout';
   if (/\[RETX\]/.test(msg))                       return 'ln-retx';
-  if (/FAIL|ERROR|MISMATCH/.test(msg))            return 'ln-fail';
+  if (/FAIL|FAILED|ERROR|MISMATCH/.test(msg))     return 'ln-fail';
   if (/Summary|Throughput|Goodput|SHA/.test(msg)) return 'ln-ok';
   return 'ln-info';
 }
@@ -576,6 +740,69 @@ function setText(id, val) {
 }
 
 setInterval(poll, 600);
+
+// ─── Automated experiments ─────────────────────────────── //
+async function startExperiments() {
+  const btn = document.getElementById('btn-experiment-run');
+  btn.disabled = true;
+  document.getElementById('console-experiments').innerHTML = '<span class="ln ln-info">// Deneyler başlatılıyor...</span>';
+  document.getElementById('experiment-gallery').innerHTML = '<span class="chart-placeholder">Grafikler hazırlanıyor...</span>';
+  experimentLogLen = 0;
+  setExperimentState(true, null);
+  try {
+    const r = await fetch('/api/experiments/start', { method: 'POST' });
+    const d = await r.json();
+    if (!d.ok) {
+      setExperimentState(false, d.error);
+      alert('Deney hatası: ' + d.error);
+    }
+  } catch(e) {
+    setExperimentState(false, e.message);
+    alert('Hata: ' + e.message);
+  }
+}
+
+function setExperimentState(on, error) {
+  experimentRunning = on;
+  const btn = document.getElementById('btn-experiment-run');
+  const badge = document.getElementById('experiment-status');
+  const progress = document.getElementById('experiment-progress');
+  btn.disabled = on;
+  btn.innerHTML = on
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Çalışıyor...`
+    : `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Deneyleri çalıştır`;
+  progress.classList.toggle('visible', on);
+  badge.className = 'badge ' + (error ? 'error' : on ? 'warn' : 'ok');
+  badge.textContent = error ? 'Hata' : on ? 'Çalışıyor' : 'Hazır';
+}
+
+async function loadExperimentResults(files = null) {
+  try {
+    if (!files) {
+      const r = await fetch('/api/results');
+      files = await r.json();
+    }
+    renderExperimentResults(files);
+  } catch(e) {
+    document.getElementById('experiment-gallery').innerHTML =
+      `<span class="chart-placeholder">Sonuçlar okunamadı: ${escHtml(e.message)}</span>`;
+  }
+}
+
+function renderExperimentResults(files) {
+  const gallery = document.getElementById('experiment-gallery');
+  const experimentFiles = (files || []).filter(name => /^s[1-4]_.*\.png$/.test(name));
+  if (!experimentFiles.length) {
+    gallery.innerHTML = '<span class="chart-placeholder">results içinde deney grafiği bulunamadı</span>';
+    return;
+  }
+  gallery.innerHTML = experimentFiles.map(name => `
+    <figure class="result-figure">
+      <img src="/api/results/${encodeURIComponent(name)}?t=${Date.now()}" alt="${escHtml(name)}"/>
+      <figcaption>${escHtml(name)}</figcaption>
+    </figure>
+  `).join('');
+}
 
 // ─── Analyze ────────────────────────────────────────────── //
 async function analyze() {

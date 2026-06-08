@@ -69,6 +69,7 @@ def main():
 
     HOST = args.host
     PORT = str(args.port)
+    LOSS_PORT = str(args.port + 1)
     LOG  = args.log_dir
     RES  = args.results_dir
 
@@ -152,14 +153,14 @@ def main():
         lbl = f"s3_loss{lr_pct}"
         srv = subprocess.Popen(
             [sys.executable, "src/server.py",
-             "--port", PORT, "--loss-rate", str(lr),
+             "--port", LOSS_PORT, "--loss-rate", str(lr),
              "--log-dir", LOG, "--label", lbl],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
         time.sleep(0.5)   # let server bind
         try:
             run_client([
-                "--file", FILE3, "--host", HOST, "--port", PORT,
+                "--file", FILE3, "--host", HOST, "--port", LOSS_PORT,
                 "--packet-size", "1024", "--timeout", "1.0",
                 "--log-dir", LOG, "--label", lbl,
             ])
@@ -196,6 +197,7 @@ def main():
     ]
     logs4 = []
     labels4 = []
+    sizes4 = []
     for filepath, fsize, lbl_name in FILE_CONFIGS:
         lbl = f"s4_{lbl_name}"
         run_client([
@@ -207,12 +209,13 @@ def main():
         if found:
             logs4.append(found[0])
             labels4.append(lbl_name)
+            sizes4.append(fsize)
 
     if len(logs4) >= 2:
         for metric in ("throughput_kbps", "goodput_kbps", "completion_sec"):
             run_analyzer([
                 "--compare", "--logs", *logs4, "--labels", *labels4,
-                "--file-size", str(10 * 1024 * 1024),  # largest for scale
+                "--file-size", str(max(sizes4)), "--file-sizes", *map(str, sizes4),
                 "--metric", metric,
                 "--title", f"Senaryo 4: Dosya Boyutu — {metric}",
                 "--output", os.path.join(RES, f"s4_{metric}.png"),

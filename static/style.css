@@ -213,6 +213,15 @@ header {
 }
 .card-full { grid-column: 1 / -1; }
 
+.experiments-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 20px;
+  padding: 24px 28px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
 /* ─── Card ─────────────────────────────────────────────── */
 .card {
   background: var(--surface);
@@ -365,6 +374,13 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
   background: var(--surface2);
   border-color: var(--accent);
   color: var(--primary);
+}
+
+.experiment-actions {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto;
+  gap: 10px;
+  align-items: center;
 }
 
 /* ─── Drop zone ─────────────────────────────────────────── */
@@ -606,6 +622,7 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
   white-space: pre-wrap;
   word-break: break-all;
 }
+.console-tall { height: 440px; }
 .console::-webkit-scrollbar { width: 6px; }
 .console::-webkit-scrollbar-track { background: transparent; }
 .console::-webkit-scrollbar-thumb { background: #30363D; border-radius: 4px; }
@@ -679,9 +696,79 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 }
 .info-row svg { width: 13px; height: 13px; flex-shrink: 0; color: var(--accent); }
 
+/* ─── Experiment runner ───────────────────────────────── */
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.scenario-item {
+  display: flex;
+  gap: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  padding: 13px;
+}
+.scenario-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.scenario-item strong {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.scenario-item p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.experiment-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+  min-height: 440px;
+  align-content: start;
+}
+.result-figure {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  overflow: hidden;
+}
+.result-figure img {
+  display: block;
+  width: 100%;
+  background: #fff;
+}
+.result-figure figcaption {
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-2);
+  word-break: break-word;
+}
+
 /* ─── Responsive ─────────────────────────────────────── */
 @media (max-width: 960px) {
   .results-grid { grid-template-columns: 1fr; }
+  .experiments-layout { grid-template-columns: 1fr; }
   .card-full    { grid-column: 1; }
   .metrics-grid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -691,6 +778,10 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
   .step-connector { width: 32px; }
   .step-panel-narrow { padding: 16px; }
   .results-grid { padding: 16px; gap: 14px; }
+  .experiments-layout { padding: 16px; gap: 14px; }
   header        { padding: 0 16px; }
   .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .scenario-grid,
+  .experiment-gallery,
+  .experiment-actions { grid-template-columns: 1fr; }
 }

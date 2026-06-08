@@ -27,12 +27,15 @@ MAX_UDP = 65535
 
 
 def run_server(port: int, output_dir: str, loss_rate: float,
-               delay_ms: float, log_dir: str, label: str):
+               delay_ms: float, log_dir: str, label: str,
+               idle_timeout: float):
     os.makedirs(output_dir, exist_ok=True)
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.settimeout(0.5)
     sock.bind(("0.0.0.0", port))
-    print(f"[SERVER] Listening on port {port}  (loss_rate={loss_rate:.2f}, delay={delay_ms}ms)")
+    print(f"[SERVER] Listening on port {port}  "
+          f"(loss_rate={loss_rate:.2f}, delay={delay_ms}ms, idle_timeout={idle_timeout}s)")
 
     while True:
         logger = TransferLogger(log_dir=log_dir, label=label or "server")
@@ -40,12 +43,35 @@ def run_server(port: int, output_dir: str, loss_rate: float,
         total_pkts = None
         client_addr = None
         filename = "received_file"
+        last_packet_time = None
+
+        def save_partial(reason: str):
+            expected = total_pkts or len(chunks)
+            missing = max(expected - len(chunks), 0)
+            file_data = b"".join(chunks.get(i, b"") for i in range(expected))
+            out_path = os.path.join(output_dir, filename + ".partial")
+            with open(out_path, "wb") as f:
+                f.write(file_data)
+            logger.log("TRANSFER_FAIL", detail=f"{reason}; missing={missing}")
+            print(f"[SERVER] WARNING: {reason}; {missing} packets missing.")
+            print(f"[SERVER] Partial file saved to {out_path}  ({len(file_data)} bytes)")
 
         print("[SERVER] Waiting for transfer...")
 
         while True:
             try:
                 raw, addr = sock.recvfrom(MAX_UDP)
+            except socket.timeout:
+                if chunks and last_packet_time is not None:
+                    idle_for = time.perf_counter() - last_packet_time
+                    if idle_for >= idle_timeout:
+                        save_partial(f"idle timeout after {idle_for:.1f}s")
+                        logger.log("TRANSFER_DONE", detail=f"pkts={len(chunks)} partial=true")
+                        summary = logger.summary()
+                        print(f"[SERVER] Summary: {summary}")
+                        logger.close()
+                        break
+                continue
             except KeyboardInterrupt:
                 print("\n[SERVER] Stopped.")
                 logger.close()
@@ -68,6 +94,7 @@ def run_server(port: int, output_dir: str, loss_rate: float,
                 continue
 
             client_addr = addr
+            last_packet_time = time.perf_counter()
 
             # ---- DATA packet ----
             if pkt.pkt_type == PKT_DATA:
@@ -111,14 +138,7 @@ def run_server(port: int, output_dir: str, loss_rate: float,
                         f.write(file_data)
                     print(f"[SERVER] File saved to {out_path}  ({len(file_data)} bytes)")
                 else:
-                    missing = (total_pkts or 0) - len(chunks)
-                    print(f"[SERVER] WARNING: {missing} packets missing, saving partial file.")
-                    file_data = b"".join(
-                        chunks.get(i, b"") for i in range(total_pkts or len(chunks))
-                    )
-                    out_path = os.path.join(output_dir, filename + ".partial")
-                    with open(out_path, "wb") as f:
-                        f.write(file_data)
+                    save_partial("FIN received before all packets arrived")
 
                 logger.log("TRANSFER_DONE", detail=f"pkts={len(chunks)}")
                 summary = logger.summary()
@@ -141,6 +161,8 @@ def main():
     parser.add_argument("--log-dir",    type=str,   default="logs")
     parser.add_argument("--label",      type=str,   default="",
                         help="Label appended to log file name")
+    parser.add_argument("--idle-timeout", type=float, default=8.0,
+                        help="Seconds to wait before saving an unfinished transfer as .partial")
     args = parser.parse_args()
 
     run_server(
@@ -150,6 +172,7 @@ def main():
         delay_ms=args.delay,
         log_dir=args.log_dir,
         label=args.label,
+        idle_timeout=args.idle_timeout,
     )
 
 

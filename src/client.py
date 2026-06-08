@@ -50,6 +50,7 @@ def send_file(host: str, port: int, filepath: str,
 
     transfer_ok = True
     start = time.perf_counter()
+    wire_payload_bytes = 0
 
     for seq, chunk in enumerate(chunks):
         pkt = DataPacket(seq_num=seq, total_pkts=total, payload=chunk)
@@ -68,6 +69,7 @@ def send_file(host: str, port: int, filepath: str,
             event = "RETRANSMIT" if attempts > 0 else "SEND"
             logger.log(event, seq_num=seq, detail=f"attempt={attempts + 1}")
             sock.sendto(raw, (host, port))
+            wire_payload_bytes += len(chunk)
             if attempts > 0:
                 print(f"  [RETX]  seq={seq}  attempt={attempts + 1}/{max_retries}")
             else:
@@ -119,6 +121,7 @@ def send_file(host: str, port: int, filepath: str,
     summary = logger.summary()
     summary["file_size_bytes"] = file_size
     summary["total_sent_bytes"] = total_sent_bytes
+    summary["wire_payload_bytes"] = wire_payload_bytes
     summary["packet_size"] = packet_size
     summary["timeout"] = timeout
     summary["max_retries"] = max_retries
@@ -127,7 +130,7 @@ def send_file(host: str, port: int, filepath: str,
 
     # Derived metrics
     if elapsed > 0:
-        summary["throughput_bps"] = total_sent_bytes * 8 / elapsed
+        summary["throughput_bps"] = wire_payload_bytes * 8 / elapsed
         summary["goodput_bps"]    = file_size * 8 / elapsed
     else:
         summary["throughput_bps"] = 0
@@ -142,6 +145,7 @@ def send_file(host: str, port: int, filepath: str,
     sock.close()
 
     print("\n[CLIENT] ===== Transfer Summary =====")
+    print(f"  Status         : {'SUCCESS' if transfer_ok else 'FAILED'}")
     print(f"  File size      : {file_size} bytes")
     print(f"  Elapsed time   : {elapsed:.3f} s")
     print(f"  Throughput     : {summary['throughput_bps'] / 1000:.1f} kbps")

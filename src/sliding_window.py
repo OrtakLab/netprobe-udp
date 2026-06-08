@@ -139,6 +139,8 @@ def send_file_gbn(host: str, port: int, filepath: str,
     summary["packet_size"] = packet_size
     summary["window_size"] = window_size
     summary["transfer_ok"] = transfer_ok
+    sent_total = summary["sent"] + summary["retransmits"]
+    summary["retransmit_rate"] = summary["retransmits"] / sent_total if sent_total else 0.0
 
     if elapsed > 0:
         summary["throughput_bps"] = total_bytes_sent * 8 / elapsed
@@ -150,10 +152,15 @@ def send_file_gbn(host: str, port: int, filepath: str,
     sock.close()
 
     print("\n[GBN] ===== Transfer Summary =====")
+    print(f"  Status       : {'SUCCESS' if transfer_ok else 'FAILED'}")
     print(f"  File size    : {file_size} bytes")
     print(f"  Elapsed time : {elapsed:.3f} s")
     print(f"  Throughput   : {summary['throughput_bps'] / 1000:.1f} kbps")
+    print(f"  Goodput      : {summary['goodput_bps'] / 1000:.1f} kbps")
+    print(f"  Sent packets : {summary['sent']}")
     print(f"  Retransmits  : {summary['retransmits']}")
+    print(f"  Retransmit rate: {summary['retransmit_rate']:.2%}")
+    print(f"  Avg RTT      : {summary['avg_rtt_sec'] * 1000:.2f} ms")
     print(f"  Log saved to : {summary['log_path']}")
     print("==================================\n")
     return summary
