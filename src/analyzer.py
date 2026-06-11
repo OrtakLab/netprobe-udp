@@ -32,6 +32,8 @@ import matplotlib
 matplotlib.use("Agg")   # headless rendering
 import matplotlib.pyplot as plt
 
+DATA_HEADER_SIZE = 15
+
 
 def parse_log(path: str) -> dict:
     """Return per-event counts and timing from a CSV log."""
@@ -46,6 +48,7 @@ def parse_log(path: str) -> dict:
         "RETRANSMIT": 0, "DROP_SIM": 0, "DUPLICATE": 0,
     }
     send_times: dict[int, float] = {}
+    transmitted_seqs: list[int] = []
     rtt_samples: list[float] = []
     first_ts = None
     last_ts = None
@@ -61,6 +64,8 @@ def parse_log(path: str) -> dict:
 
         if ev in counts:
             counts[ev] += 1
+        if ev in ("SEND", "RETRANSMIT") and seq >= 0:
+            transmitted_seqs.append(seq)
 
         if ev == "SEND" and seq >= 0:
             send_times[seq] = ts
@@ -75,6 +80,7 @@ def parse_log(path: str) -> dict:
         "elapsed_sec": elapsed,
         "avg_rtt_sec": avg_rtt,
         "rtt_samples": rtt_samples,
+        "transmitted_seqs": transmitted_seqs,
     }
 
 
@@ -84,8 +90,16 @@ def compute_metrics(log_data: dict, file_size_bytes: int,
     retx = log_data["RETRANSMIT"]
     elapsed = log_data["elapsed_sec"]
 
-    # bytes actually pushed over the wire (incl. retransmissions)
-    pkt_bytes = (packet_size * sent) if packet_size else file_size_bytes
+    # UDP data packet bytes pushed over the wire (payload + NetProbe header)
+    if packet_size:
+        pkt_bytes = sum(
+            DATA_HEADER_SIZE + max(0, min(packet_size, file_size_bytes - seq * packet_size))
+            for seq in log_data.get("transmitted_seqs", [])
+        )
+        if not pkt_bytes and sent:
+            pkt_bytes = (packet_size + DATA_HEADER_SIZE) * sent
+    else:
+        pkt_bytes = file_size_bytes
     throughput_bps = (pkt_bytes * 8 / elapsed) if elapsed else 0.0
     goodput_bps    = (file_size_bytes * 8 / elapsed) if elapsed else 0.0
 
