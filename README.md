@@ -225,6 +225,32 @@ Bütünlük kontrolü: CRC32 her pakette, SHA-256 hash FIN paketinde gönderilir
 
 ---
 
+## Web Arayüzü Ekran Görüntüleri
+
+Web arayüzü; UDP dosya aktarım sürecini kolayca yönetmenizi, ağ gecikmelerini/kayıplarını dinamik olarak simüle etmenizi ve aktarım sonrasında oluşan performans metriklerini grafiklerle canlı olarak incelemenizi sağlar.
+
+### 1. UDP Sunucu Yapılandırması (Adım 1)
+Yapay paket kaybı ve gecikme (delay) parametrelerini belirleyerek UDP sunucusunu tek tıkla başlatabilirsiniz.
+
+![Adım 1: UDP Sunucu Yapılandırması](static/screenshots/1_server_setup.png)
+
+### 2. Güvenilir Dosya Gönderimi (Adım 2)
+Gönderilecek dosyayı sürükle-bırak yöntemiyle seçebilir; paket boyutu, ACK zaman aşımı ve maksimum yeniden deneme limitlerini belirleyebilirsiniz. Ayrıca **Go-Back-N (kayan pencere)** protokolünü ve pencere boyutunu aktif hale getirebilirsiniz.
+
+![Adım 2: Güvenilir Dosya Gönderimi](static/screenshots/2_file_transfer.png)
+
+### 3. Aktarım Metrikleri ve Canlı Analiz (Adım 3)
+Aktarım tamamlandığında Throughput (kbps), Goodput (kbps), ortalama RTT (ms) ve paket yeniden iletim oranları (Retransmit Rate) anlık olarak hesaplanır. **"Analiz et"** butonuyla Throughput ve Goodput değerlerini karşılaştıran grafikler dinamik olarak çizilir.
+
+![Adım 3: Aktarım Metrikleri ve Canlı Analiz](static/screenshots/3_transfer_metrics.png)
+
+### 4. Otomatik Deney Seti (Adım 4)
+Farklı paket boyutları, timeout değerleri, kayıp oranları ve dosya boyutlarının performans üzerindeki etkilerini incelemek için otomatik deney senaryolarını tek tuşla koşturabilir, üretilen grafikleri anlık olarak arayüzde görebilirsiniz.
+
+![Adım 4: Otomatik Deney Seti](static/screenshots/4_automated_experiments.png)
+
+---
+
 ## Bağımlılıklar
 
 - Python standart kütüphanesi: `socket`, `struct`, `zlib`, `hashlib`, `threading`, `csv`, `time`
